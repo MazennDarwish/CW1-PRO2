@@ -48,7 +48,7 @@ public:
 
 // Encrypts or decrypts a string using XOR operation with a simple key.
 string encryptDecrypt(const string& toEncrypt) {
-    char key = 'z'; // Arbitrary choice of key for encryption/decryption.
+    char key = 'z'; // Set choice of key for encryption/decryption.
     string output = toEncrypt;
 
     for (size_t i = 0; i < toEncrypt.size(); i++) {
