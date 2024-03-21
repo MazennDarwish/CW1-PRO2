@@ -3,7 +3,6 @@
 #include <random>
 #include <string>
 
-
 using namespace std;
 
 class PasswordManager {
@@ -26,6 +25,24 @@ public:
 
     // Function to sign up a new user by writing their credentials to a file
     void signUp(const string& username, const string& password) {
+        ifstream userFileIn(userFile, ios::binary); // Open the user file in read mode to check existing usernames
+        if (!userFileIn.is_open()) {
+            cout << "Failed to open user file for reading.\n";
+            return;
+        }
+        string storedUsername, storedPassword;
+        // Read through user file to find matching username
+        while (getline(userFileIn, storedUsername) && getline(userFileIn, storedPassword)) {
+            storedUsername = encryptDecrypt(storedUsername);
+            if (username == storedUsername) {
+                cout << "User already exists.\n";
+                userFileIn.close();
+                return; // Exit if username is found
+            }
+        }
+        userFileIn.close();
+
+        // Proceed to add new user if username is unique
         ofstream userFileOut(userFile, ios::app | ios::binary); // Use append mode to add new users
         if (!userFileOut.is_open()) {
             cout << "Failed to open user file for writing.\n";
@@ -34,6 +51,7 @@ public:
         // Encrypt and write the username and password to the user file
         userFileOut << encryptDecrypt(username) << "\n" << encryptDecrypt(password) << "\n";
         userFileOut.close();
+        cout << "Sign-up successful!\n";
     }
 
     // Function to authenticate a user by reading their credentials from a file
@@ -107,9 +125,9 @@ public:
         tempFile.close();
         remove(passwordFile.c_str());
         rename("temp.txt", passwordFile.c_str());
-        cout << "Password removed successfully.\n";
+        cout <<
+            "Password removed successfully.\n";
     }
-
     void retrievePassword(int index) {
         ifstream file(passwordFile, ios::binary);
         if (!file.is_open()) {
@@ -127,8 +145,7 @@ public:
             }
         }
         file.close();
-        cout << "No password found at index " <<
-            index << ".\n";
+        cout << "No password found at index " << index << ".\n";
     }
 };
 
@@ -150,7 +167,6 @@ string generatePassword(size_t length) {
     random_device rd;
     mt19937 generator(rd());
     uniform_int_distribution<> distribution(0, characters.size() - 1);
-
     do {
         password.clear();
         for (size_t i = 0; i < length; ++i) {
@@ -159,12 +175,12 @@ string generatePassword(size_t length) {
     } while (!isValidPassword(password));
 
     return password;
+
 }
 
 int main() {
     PasswordManager manager;
     string username, password;
-
     cout << "Do you want to (1) Sign up or (2) Log in? Enter 1 or 2: ";
     int choice;
     cin >> choice;
@@ -176,7 +192,7 @@ int main() {
         cout << "Choose a password: ";
         getline(cin, password);
         manager.signUp(username, password);
-        cout << "Sign-up successful! Please log in.\n";
+        // The "Sign-up successful" message is now handled inside signUp
     }
 
     cout << "Enter username: ";
