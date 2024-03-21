@@ -8,12 +8,12 @@ using namespace std;
 
 class PasswordManager {
 private:
-    const string username = "mazen1234"; // Set username
-    const string correctPassword = "mazen1234"; // Set password for the user
-    const string passwordFile = "passwords.txt";
+    string userFile = "user.txt"; // File to store user credentials
+    string passwordFile; // File to store passwords, specific to the user
+    char key = 'z'; // Simple key for encryption/decryption
 
+    // Encrypts or decrypts a string using a simple XOR cipher
     string encryptDecrypt(const string& toEncrypt) {
-        char key = 'z'; // Simple key for encryption/decryption.
         string output = toEncrypt; // Initialize output with the input string
         for (size_t i = 0; i < toEncrypt.size(); ++i) {
             output[i] = toEncrypt[i] ^ key; // XOR each byte
@@ -24,12 +24,47 @@ private:
 public:
     PasswordManager() {}
 
+    // Function to sign up a new user by writing their credentials to a file
+    void signUp(const string& username, const string& password) {
+        ofstream userFileOut(userFile, ios::app | ios::binary); // Use append mode to add new users
+        if (!userFileOut.is_open()) {
+            cout << "Failed to open user file for writing.\n";
+            return;
+        }
+        // Encrypt and write the username and password to the user file
+        userFileOut << encryptDecrypt(username) << "\n" << encryptDecrypt(password) << "\n";
+        userFileOut.close();
+    }
+
+    // Function to authenticate a user by reading their credentials from a file
     bool authenticate(const string& username, const string& password) {
-        return this->username == username && this->correctPassword == password;
+        ifstream userFileIn(userFile, ios::binary);
+        if (!userFileIn.is_open()) {
+            cout << "User file not found. Please sign up first.\n";
+            return false;
+        }
+        string storedUsername, storedPassword;
+        bool isAuthenticated = false;
+        // Read through user file to find matching username and password
+        while (getline(userFileIn, storedUsername) && getline(userFileIn, storedPassword)) {
+            storedUsername = encryptDecrypt(storedUsername);
+            storedPassword = encryptDecrypt(storedPassword);
+            if (username == storedUsername && password == storedPassword) {
+                isAuthenticated = true;
+                break;
+            }
+        }
+        userFileIn.close();
+
+        // Set the user-specific password file name
+        if (isAuthenticated) {
+            passwordFile = username + "_passwords.txt"; // Unique file for each user
+        }
+        return isAuthenticated;
     }
 
     void addPassword(const string& password) {
-        ofstream file(passwordFile, ios::app | ios::binary); // Open file in append mode.
+        ofstream file(passwordFile, ios::app | ios::binary); // Open file in append mode
         if (!file.is_open()) {
             cout << "Failed to open password file for writing.\n";
             return;
@@ -64,7 +99,7 @@ public:
         int currentIndex = 0;
         while (getline(file, line)) {
             currentIndex++;
-            if (currentIndex != index) { // Copy all but the selected index
+            if (currentIndex != index) {
                 tempFile << line << "\n";
             }
         }
@@ -92,7 +127,8 @@ public:
             }
         }
         file.close();
-        cout << "No password found at index " << index << ".\n";
+        cout << "No password found at index " <<
+            index << ".\n";
     }
 };
 
@@ -129,6 +165,20 @@ int main() {
     PasswordManager manager;
     string username, password;
 
+    cout << "Do you want to (1) Sign up or (2) Log in? Enter 1 or 2: ";
+    int choice;
+    cin >> choice;
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+    if (choice == 1) {
+        cout << "Choose a username: ";
+        getline(cin, username);
+        cout << "Choose a password: ";
+        getline(cin, password);
+        manager.signUp(username, password);
+        cout << "Sign-up successful! Please log in.\n";
+    }
+
     cout << "Enter username: ";
     getline(cin, username);
     cout << "Enter password: ";
@@ -144,16 +194,17 @@ int main() {
 
     bool running = true;
     while (running) {
-        cout << "\n Choose an option:\n";
+        cout << "\nChoose an option:\n";
         cout << "1. Add a new password\n";
         cout << "2. Generate and add a new secure password\n";
-        cout << "3.Remove a stored password\n";
+        cout << "3. Remove a stored password\n";
         cout << "4. Retrieve a specific password\n";
         cout << "5. Log out\n";
         cout << "Option: ";
         int option;
         cin >> option;
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
         switch (option) {
         case 1: {
             cout << "Enter your password (must be more than 8 characters and contain at least one number and one letter): ";
@@ -167,7 +218,7 @@ int main() {
             break;
         }
         case 2: {
-            string newPassword = generatePassword(12); // Generate a new secure password.
+            string newPassword = generatePassword(12); // Generate a new secure password
             manager.addPassword(newPassword);
             cout << "Generated and added new password: " << newPassword << endl;
             break;
@@ -188,7 +239,7 @@ int main() {
         }
         case 5:
             cout << "You are now logged out. Goodbye.\n";
-            running = false; // Terminate the program.
+            running = false; // Terminate the program
             break;
         default:
             cout << "Invalid option. Please choose between 1 and 5.\n";
@@ -196,5 +247,5 @@ int main() {
         }
     }
 
-    return 0; // End of the program.
+    return 0; // End of the program
 }
