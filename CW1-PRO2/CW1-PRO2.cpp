@@ -3,19 +3,21 @@
 #include <random>
 #include <string>
 
+
 using namespace std;
 
 class PasswordManager {
 private:
     string userFile = "user.txt"; // File to store user credentials
-    string passwordFile; // File to store passwords, specific to the user
-    char key = 'z'; // Simple key for encryption/decryption
+    string passwordFile; // File to store passwords for each specific user
+    char key = 'z'; // Simple key for encryption/decryption using the XOR cipher
 
-    // Encrypts or decrypts a string using a simple XOR cipher
+
+    // Encrypts or decrypts the input using the XOR cipher
     string encryptDecrypt(const string& toEncrypt) {
-        string output = toEncrypt; // Initialize output with the input string
+        string output = toEncrypt;
         for (size_t i = 0; i < toEncrypt.size(); ++i) {
-            output[i] = toEncrypt[i] ^ key; // XOR each byte
+            output[i] = toEncrypt[i] ^ key;
         }
         return output;
     }
@@ -23,47 +25,49 @@ private:
 public:
     PasswordManager() {}
 
-    // Function to sign up a new user by writing their credentials to a file
-    void signUp(const string& username, const string& password) {
-        ifstream userFileIn(userFile, ios::binary); // Open the user file in read mode to check existing usernames
-        if (!userFileIn.is_open()) {
+    // Signs up a new user, returns true if successful
+    bool signUp(const string& username, const string& password) {
+        ifstream userFileIn(userFile, ios::binary); //Open user file for reading
+         if (!userFileIn.is_open()) {
             cout << "Failed to open user file for reading.\n";
-            return;
+            return false;
         }
+
+         // Checks if the username already exists
         string storedUsername, storedPassword;
-        // Read through user file to find matching username
         while (getline(userFileIn, storedUsername) && getline(userFileIn, storedPassword)) {
             storedUsername = encryptDecrypt(storedUsername);
             if (username == storedUsername) {
                 cout << "User already exists.\n";
                 userFileIn.close();
-                return; // Exit if username is found
+                return false;
             }
         }
         userFileIn.close();
 
-        // Proceed to add new user if username is unique
-        ofstream userFileOut(userFile, ios::app | ios::binary); // Use append mode to add new users
+        // Adds a new user to the file
+        ofstream userFileOut(userFile, ios::app | ios::binary);
         if (!userFileOut.is_open()) {
             cout << "Failed to open user file for writing.\n";
-            return;
+            return false;
         }
-        // Encrypt and write the username and password to the user file
         userFileOut << encryptDecrypt(username) << "\n" << encryptDecrypt(password) << "\n";
         userFileOut.close();
         cout << "Sign-up successful!\n";
+        return true;
     }
 
-    // Function to authenticate a user by reading their credentials from a file
+    // Authenticates a user, retrun true if successful
     bool authenticate(const string& username, const string& password) {
         ifstream userFileIn(userFile, ios::binary);
         if (!userFileIn.is_open()) {
             cout << "User file not found. Please sign up first.\n";
             return false;
         }
+
+        // Verifies the username and password
         string storedUsername, storedPassword;
         bool isAuthenticated = false;
-        // Read through user file to find matching username and password
         while (getline(userFileIn, storedUsername) && getline(userFileIn, storedPassword)) {
             storedUsername = encryptDecrypt(storedUsername);
             storedPassword = encryptDecrypt(storedPassword);
@@ -74,15 +78,16 @@ public:
         }
         userFileIn.close();
 
-        // Set the user-specific password file name
+        // Sets the file name for the authenticated user
         if (isAuthenticated) {
-            passwordFile = username + "_passwords.txt"; // Unique file for each user
+            passwordFile = username + "_passwords.txt";
         }
         return isAuthenticated;
     }
 
+    // Adds a new password for the user
     void addPassword(const string& password) {
-        ofstream file(passwordFile, ios::app | ios::binary); // Open file in append mode
+        ofstream file(passwordFile, ios::app | ios::binary);
         if (!file.is_open()) {
             cout << "Failed to open password file for writing.\n";
             return;
@@ -92,6 +97,7 @@ public:
         file.close();
     }
 
+    // Loads and displays all stored passwords for the user
     void loadPasswords() {
         ifstream file(passwordFile, ios::binary);
         if (!file.is_open()) {
@@ -101,11 +107,12 @@ public:
         cout << "Stored passwords (encrypted):\n";
         string encryptedPassword;
         while (getline(file, encryptedPassword)) {
-            cout << encryptedPassword << endl; // Display encrypted passwords as they're loaded
+            cout << encryptedPassword << endl; // Displays the encrypted passwords
         }
         file.close();
     }
 
+    // Removes a password chosen by the user at a given index
     void removePassword(int index) {
         ifstream file(passwordFile, ios::binary);
         ofstream tempFile("temp.txt", ios::binary);
@@ -113,6 +120,8 @@ public:
             cout << "Failed to open files.\n";
             return;
         }
+
+        // Copy all passwords except the one to remove to a temporary file
         string line;
         int currentIndex = 0;
         while (getline(file, line)) {
@@ -121,15 +130,18 @@ public:
                 tempFile << line << "\n";
             }
         }
+
+        // Replace the orginal file with the updated one to contain all non deleted password
         file.close();
         tempFile.close();
         remove(passwordFile.c_str());
         rename("temp.txt", passwordFile.c_str());
-        cout <<
-            "Password removed successfully.\n";
+        cout << "Password removed successfully.\n";
     }
+
+    // Retrieves and displays a password at a given index
     void retrievePassword(int index) {
-        ifstream file(passwordFile, ios::binary);
+        ifstream file(passwordFile, ios::binary); // Open the password file for reading
         if (!file.is_open()) {
             cout << "Failed to open password file for reading.\n";
             return;
@@ -148,66 +160,94 @@ public:
         cout << "No password found at index " << index << ".\n";
     }
 };
-
+// Validates the password strength and features
 bool isValidPassword(const string& password) {
-    if (password.length() <= 8) return false;
+    if (password.length() <= 8) return false; // Length check
     bool hasNumber = false;
     bool hasLetter = false;
     for (char c : password) {
-        if (isdigit(c)) hasNumber = true;
-        if (isalpha(c)) hasLetter = true;
-        if (hasNumber && hasLetter) return true;
+        if (isdigit(c)) hasNumber = true; // Checks for at least one number
+        if (isalpha(c)) hasLetter = true; // Checks for at least one letter
+        if (hasNumber && hasLetter) return true; // Must contain at least one of both
     }
-    return false;
+    return false; // If requirments are not met
 }
 
+// Generates a random password meeting the criteria of the password validation
 string generatePassword(size_t length) {
     const string characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()";
     string password;
     random_device rd;
-    mt19937 generator(rd());
+    mt19937 generator(rd()); // Random number generator known as Mersenne Twister
     uniform_int_distribution<> distribution(0, characters.size() - 1);
     do {
         password.clear();
         for (size_t i = 0; i < length; ++i) {
-            password += characters[distribution(generator)];
+            password += characters[distribution(generator)]; // Generates random characters
         }
-    } while (!isValidPassword(password));
+    } while (!isValidPassword(password)); // Ensures that the generated password is valid
 
     return password;
-
 }
 
 int main() {
     PasswordManager manager;
     string username, password;
-    cout << "Do you want to (1) Sign up or (2) Log in? Enter 1 or 2: ";
     int choice;
-    cin >> choice;
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    bool signUpSuccess = false;
 
-    if (choice == 1) {
-        cout << "Choose a username: ";
+    // Loops until user signs up successfully or decides to log in
+    while (!signUpSuccess) {
+        cout << "Do you want to (1) Sign up or (2) Log in? Enter 1 or 2 (Enter 0 to exit): ";
+        cin >> choice;
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+        if (choice == 0) {
+            cout << "Exiting program.\n";
+            return 0; // Exit the program
+        }
+        else if (choice == 1) {
+            cout << "Choose a username: ";
+            getline(cin, username);
+            cout << "Choose a password: ";
+            getline(cin, password);
+            signUpSuccess = manager.signUp(username, password); // Attempts to sign up
+            if (signUpSuccess) {
+                cout << "Sign-up successful! Please log in.\n";
+                // Proceed to login after successful sign-up
+                break; // Exit the sign-up loop
+            }
+            else {
+                cout << "Please try signing up again with a different username.\n";
+                // The loop continues
+            }
+        }
+        else if (choice == 2) {
+            // Allow the user to attempt to log in if they don't want to sign up again
+            break; // Exit the loop to proceed to login
+        }
+        else {
+            cout << "Invalid option. Please enter 1 or 2.\n";
+        }
+    }
+
+    // Login process
+    if (choice == 2) {
+        cout << "Enter username: ";
         getline(cin, username);
-        cout << "Choose a password: ";
+        cout << "Enter password: ";
         getline(cin, password);
-        manager.signUp(username, password);
-        // The "Sign-up successful" message is now handled inside signUp
+
+        if (!manager.authenticate(username, password)) {
+            cout << "Login failed. Exiting program.\n";
+            return 1;
+        }
+
+        cout << "Login successful!\n";
+        manager.loadPasswords();
     }
 
-    cout << "Enter username: ";
-    getline(cin, username);
-    cout << "Enter password: ";
-    getline(cin, password);
-
-    if (!manager.authenticate(username, password)) {
-        cout << "Login failed. Exiting program.\n";
-        return 1;
-    }
-
-    cout << "Login successful!\n";
-    manager.loadPasswords();
-
+    // Password management
     bool running = true;
     while (running) {
         cout << "\nChoose an option:\n";
@@ -253,6 +293,7 @@ int main() {
             manager.retrievePassword(index);
             break;
         }
+
         case 5:
             cout << "You are now logged out. Goodbye.\n";
             running = false; // Terminate the program
@@ -265,3 +306,4 @@ int main() {
 
     return 0; // End of the program
 }
+
