@@ -3,7 +3,6 @@
 #include <random>
 #include <string>
 
-
 using namespace std;
 
 class PasswordManager {
@@ -11,7 +10,6 @@ private:
     string userFile = "user.txt"; // File to store user credentials
     string passwordFile; // File to store passwords for each specific user
     char key = 'z'; // Simple key for encryption/decryption using the XOR cipher
-
 
     // Encrypts or decrypts the input using the XOR cipher
     string encryptDecrypt(const string& toEncrypt) {
@@ -28,12 +26,12 @@ public:
     // Signs up a new user, returns true if successful
     bool signUp(const string& username, const string& password) {
         ifstream userFileIn(userFile, ios::binary); //Open user file for reading
-         if (!userFileIn.is_open()) {
+        if (!userFileIn.is_open()) {
             cout << "Failed to open user file for reading.\n";
             return false;
         }
 
-         // Checks if the username already exists
+        // Checks if the username already exists
         string storedUsername, storedPassword;
         while (getline(userFileIn, storedUsername) && getline(userFileIn, storedPassword)) {
             storedUsername = encryptDecrypt(storedUsername);
@@ -53,11 +51,10 @@ public:
         }
         userFileOut << encryptDecrypt(username) << "\n" << encryptDecrypt(password) << "\n";
         userFileOut.close();
-        cout << "Sign-up successful!\n";
         return true;
     }
 
-    // Authenticates a user, retrun true if successful
+    // Authenticates a user, return true if successful
     bool authenticate(const string& username, const string& password) {
         ifstream userFileIn(userFile, ios::binary);
         if (!userFileIn.is_open()) {
@@ -131,10 +128,11 @@ public:
             }
         }
 
-        // Replace the orginal file with the updated one to contain all non deleted password
+        // Replace the original file with the updated one to contain all non-deleted passwords
         file.close();
         tempFile.close();
-        remove(passwordFile.c_str());
+        remove(passwordFile.c_str
+        ());
         rename("temp.txt", passwordFile.c_str());
         cout << "Password removed successfully.\n";
     }
@@ -160,6 +158,7 @@ public:
         cout << "No password found at index " << index << ".\n";
     }
 };
+
 // Validates the password strength and features
 bool isValidPassword(const string& password) {
     if (password.length() <= 8) return false; // Length check
@@ -170,7 +169,7 @@ bool isValidPassword(const string& password) {
         if (isalpha(c)) hasLetter = true; // Checks for at least one letter
         if (hasNumber && hasLetter) return true; // Must contain at least one of both
     }
-    return false; // If requirments are not met
+    return false; // If requirements are not met
 }
 
 // Generates a random password meeting the criteria of the password validation
@@ -194,60 +193,45 @@ int main() {
     PasswordManager manager;
     string username, password;
     int choice;
-    bool signUpSuccess = false;
 
-    // Loops until user signs up successfully or decides to log in
-    while (!signUpSuccess) {
-        cout << "Do you want to (1) Sign up or (2) Log in? Enter 1 or 2 (Enter 0 to exit): ";
-        cin >> choice;
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    cout << "Do you want to (1) Sign up or (2) Log in? Enter 1 or 2 (Enter 0 to exit): ";
+    cin >> choice;
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-        if (choice == 0) {
-            cout << "Exiting program.\n";
-            return 0; // Exit the program
-        }
-        else if (choice == 1) {
-            cout << "Choose a username: ";
-            getline(cin, username);
-            cout << "Choose a password: ";
-            getline(cin, password);
-            signUpSuccess = manager.signUp(username, password); // Attempts to sign up
-            if (signUpSuccess) {
-                cout << "Sign-up successful! Please log in.\n";
-                // Proceed to login after successful sign-up
-                break; // Exit the sign-up loop
-            }
-            else {
-                cout << "Please try signing up again with a different username.\n";
-                // The loop continues
-            }
-        }
-        else if (choice == 2) {
-            // Allow the user to attempt to log in if they don't want to sign up again
-            break; // Exit the loop to proceed to login
+    if (choice == 0) {
+        cout << "Exiting program.\n";
+        return 0; // Exit the program
+    }
+    else if (choice == 1) {
+        cout << "Choose a username: ";
+        getline(cin, username);
+        cout << "Choose a password: ";
+        getline(cin, password);
+        if (manager.signUp(username, password)) {
+            cout << "Sign-up successful!\n";
         }
         else {
-            cout << "Invalid option. Please enter 1 or 2.\n";
+            cout << "Please try signing up again with a different username.\n";
+            return 1; // Exiting for simplicity
         }
     }
 
-    // Login process
-    if (choice == 2) {
-        cout << "Enter username: ";
-        getline(cin, username);
-        cout << "Enter password: ";
-        getline(cin, password);
+    // Asking for login after sign up or if the user chose to log in directly
+    cout << "Please log in.\n";
+    cout << "Enter username: ";
+    getline(cin, username);
+    cout << "Enter password: ";
+    getline(cin, password);
 
-        if (!manager.authenticate(username, password)) {
-            cout << "Login failed. Exiting program.\n";
-            return 1;
-        }
-
-        cout << "Login successful!\n";
-        manager.loadPasswords();
+    if (!manager.authenticate(username, password)) {
+        cout << "Login failed. Exiting program.\n";
+        return 1;
     }
 
-    // Password management
+    cout << "Login successful!\n";
+    manager.loadPasswords();
+
+    // Password management logic...
     bool running = true;
     while (running) {
         cout << "\nChoose an option:\n";
@@ -257,26 +241,26 @@ int main() {
         cout << "4. Retrieve a specific password\n";
         cout << "5. Log out\n";
         cout << "Option: ";
-        int option;
-        cin >> option;
+        cin >> choice;
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-        switch (option) {
+        switch (choice) {
         case 1: {
             cout << "Enter your password (must be more than 8 characters and contain at least one number and one letter): ";
             getline(cin, password);
-            while (!isValidPassword(password)) {
+            if (!isValidPassword(password)) {
                 cout << "Invalid password. It must contain at least one number and letter and must be longer than 8 characters.\n";
-                getline(cin, password);
             }
-            manager.addPassword(password);
-            cout << "Password added successfully.\n";
+            else {
+                manager.addPassword(password);
+                cout << "Password added successfully.\n";
+            }
             break;
         }
         case 2: {
             string newPassword = generatePassword(12); // Generate a new secure password
             manager.addPassword(newPassword);
-            cout << "Generated and added new password: " << newPassword << endl;
+            cout << "Generated and added new password:" << newPassword << endl;
             break;
         }
         case 3: {
@@ -293,7 +277,6 @@ int main() {
             manager.retrievePassword(index);
             break;
         }
-
         case 5:
             cout << "You are now logged out. Goodbye.\n";
             running = false; // Terminate the program
