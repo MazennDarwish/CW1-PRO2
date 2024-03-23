@@ -11,9 +11,9 @@ Secure Password Generation: Auto-generate passwords that meet security requireme
 # Usage
 ## After logging in, you will be presented with the following options:
 
-Add a new password.
-Generate and add a new secure password.
-Remove a stored password.
-Retrieve a specific password.
-Log out.
-Select the desired option by entering the corresponding number.
+<br> Add a new password.
+<br> Generate and add a new secure password.
+<br> Remove a stored password.
+<br> Retrieve a specific password.
+<br> Log out.
+<br> Select the desired option by entering the corresponding number.
