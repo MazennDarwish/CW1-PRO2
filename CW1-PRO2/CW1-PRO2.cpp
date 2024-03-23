@@ -231,7 +231,7 @@ int main() {
     cout << "Login successful!\n";
     manager.loadPasswords();
 
-    // Password management logic...
+    // Password management logic
     bool running = true;
     while (running) {
         cout << "\nChoose an option:\n";
